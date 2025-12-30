@@ -24,6 +24,7 @@ use auto_update::AutoUpdateStatus;
 use call::ActiveCall;
 use client::{Client, UserStore, zed_urls};
 use cloud_llm_client::{Plan, PlanV1, PlanV2};
+use git;
 use gpui::{
     Action, AnyElement, App, Context, Corner, Element, Entity, Focusable, InteractiveElement,
     IntoElement, MouseButton, ParentElement, Render, StatefulInteractiveElement, Styled,
@@ -150,8 +151,9 @@ impl Render for TitleBar {
             h_flex()
                 .gap_1()
                 .map(|title_bar| {
-                    let mut render_project_items = title_bar_settings.show_branch_name
-                        || title_bar_settings.show_project_items;
+                    let mut render_project_items = title_bar_settings.show_project_items
+                        || title_bar_settings.show_branch_name
+                        || title_bar_settings.show_branch_sync;
                     title_bar
                         .when_some(
                             self.application_menu.clone().filter(|_| !show_menus),
@@ -171,6 +173,9 @@ impl Render for TitleBar {
                                 })
                                 .when(title_bar_settings.show_branch_name, |title_bar| {
                                     title_bar.children(self.render_project_repo(window, cx))
+                                })
+                                .when(title_bar_settings.show_branch_sync, |title_bar| {
+                                    title_bar.children(self.render_sync_status(cx))
                                 })
                         })
                 })
@@ -689,6 +694,49 @@ impl TitleBar {
                         window.focus(&this.active_pane().focus_handle(cx), cx);
                         window.dispatch_action(zed_actions::git::Branch.boxed_clone(), cx);
                     });
+                }),
+        )
+    }
+
+    pub fn render_sync_status(&self, cx: &mut Context<Self>) -> Option<impl IntoElement> {
+        let repository = self.project.read(cx).active_repository(cx)?;
+
+        let (ahead, behind) = {
+            let repo = repository.read(cx);
+            let branch = repo.branch.as_ref()?;
+            let upstream = branch.upstream.as_ref()?;
+
+            match &upstream.tracking {
+                git::repository::UpstreamTracking::Tracked(status) => (status.ahead, status.behind),
+                git::repository::UpstreamTracking::Gone => {
+                    return None;
+                }
+            }
+        };
+
+        let sync_label = format!("↓ {} ↑ {}", behind, ahead);
+        let tooltip_text = format!("{} commits behind, {} commits ahead", behind, ahead);
+
+        Some(
+            PopoverMenu::new("sync-status-popover")
+                .trigger_with_tooltip(
+                    Button::new("sync_status_trigger", sync_label)
+                        .label_size(LabelSize::Small)
+                        .color(Color::Muted),
+                    Tooltip::text(tooltip_text),
+                )
+                .menu(move |window, cx| {
+                    Some(ContextMenu::build(window, cx, |context_menu, _, _| {
+                        context_menu
+                            .action("Fetch", git::Fetch.boxed_clone())
+                            .action("Fetch From", git::FetchFrom.boxed_clone())
+                            .action("Pull", git::Pull.boxed_clone())
+                            .action("Pull (Rebase)", git::PullRebase.boxed_clone())
+                            .separator()
+                            .action("Push", git::Push.boxed_clone())
+                            .action("Push To", git::PushTo.boxed_clone())
+                            .action("Force Push", git::ForcePush.boxed_clone())
+                    }))
                 }),
         )
     }

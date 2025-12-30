@@ -16882,6 +16882,7 @@ dependencies = [
  "cloud_llm_client",
  "collections",
  "db",
+ "git",
  "gpui",
  "http_client",
  "notifications",
