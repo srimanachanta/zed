@@ -115,6 +115,7 @@ To disable this behavior use:
   "title_bar": {
     "show_branch_icon": false,      // Show/hide branch icon beside branch switcher
     "show_branch_name": true,       // Show/hide branch name
+    "show_branch_sync": true,       // Show/hide branch sync button
     "show_project_items": true,     // Show/hide project host and name
     "show_onboarding_banner": true, // Show/hide onboarding banners
     "show_user_picture": true,      // Show/hide user avatar

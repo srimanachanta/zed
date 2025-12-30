@@ -269,6 +269,10 @@ pub struct TitleBarSettingsContent {
     ///
     /// Default: false
     pub show_branch_icon: Option<bool>,
+    /// Whether to show the branch sync button in the title bar.
+    ///
+    /// Default: true
+    pub show_branch_sync: Option<bool>,
     /// Whether to show onboarding banners in the title bar.
     ///
     /// Default: true

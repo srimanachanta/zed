@@ -2953,6 +2953,28 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     files: USER,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Show Branch Sync",
+                    description: "Show the branch sync button in the titlebar.",
+                    field: Box::new(SettingField {
+                        json_path: Some("title_bar.show_branch_sync"),
+                        pick: |settings_content| {
+                            settings_content
+                                .title_bar
+                                .as_ref()?
+                                .show_branch_sync
+                                .as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content
+                                .title_bar
+                                .get_or_insert_default()
+                                .show_branch_sync = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Show Project Items",
                     description: "Show the project host and name in the titlebar.",
                     field: Box::new(SettingField {
